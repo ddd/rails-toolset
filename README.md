@@ -9,6 +9,16 @@ By unified I mean to say that the database engine is included in the resulting i
 
 This image takes the unified (all in one) approach simply due to this being a first rendition of the entire stack pool. Basically, it answers the question: "What do I need exactly for a base image to build off of without refinements?"
 
+# What's In An Image?
+
+This image contains at least the following. Version information is as of initial commit of project.
+
+    - Ruby 2.7
+    - Rails 6.0.3
+    - NodeJS 12.18
+    - Yarn 1.22
+    - PostgreSQL 12.2 (and its development header files)
+
 # How To Build The Image
 
 To build the base image, which means the primary image all others will be built from, simply follow this commandline.
