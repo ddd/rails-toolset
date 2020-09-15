@@ -50,4 +50,21 @@ FROM deryldowney/rails-toolset:latest
 ```
 at the top of your own `Dockerfile` and build out from there. Don't forget the `latest` so you always have the most up to date version. Simple as that!
 
+## Changing The Build From The Command Line
+
+If you want to change certain things, like the User's account info, you can either modify the Dockerfile.rails directly OR you can pass the `docker build` command some `--build-arg`.
+
+Lets say you want to modify the User name to be 'appuser' instead of 'rails_user', nothing else. To do that you would run the command above but add ``--build-arg USER_NAME='appuser'``. This is why we used ARGs in the Dockerfile rather than ENV entries.
+
+***Example***
+
+```
+    docker build --build-arg USER_NAME='appuser' \
+    --force-rm --progress plain \
+    -t deryldowney/rails-toolset:latest \
+    -f Dockerfile.rails .
+```
+
+Bob's your uncle, there you go!
+
 Have fun!
