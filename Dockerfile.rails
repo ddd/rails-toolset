@@ -1,0 +1,59 @@
+# We build from the official Docker ruby image. Modify this to change which Ruby version.
+FROM ruby:2.7
+
+# Set the MAINTAINER/AUTHOR label so folks know who to blame and get help from.
+LABEL MAINTAINER="ddd@deryldowney.com"
+
+# Basic application user information for creating the user account the app will run under/as.
+# Making them as ARGs here its easy to change in the file and/or modify from the cmdline as
+# part of the 'docker build' command.
+ARG USER_ID='1000'
+ARG GROUP_ID='1000'
+ARG USER_NAME='rails_user'
+ARG GROUP_NAME=$USER_NAME
+ARG HOME_DIR='/workspaces/rails_devapp'
+ARG ROOT_PASS='ubuntu'
+ARG USER_PASS='devops'
+
+# Create the user & group that will be used to run the Rails Application under.
+# Set the user's HOMEDIR to the app's source directory.
+RUN addgroup --gid $GROUP_ID $GROUP_NAME
+RUN adduser --disabled-password --gecos '' --home $HOME_DIR --uid $USER_ID --gid $GROUP_ID $USER_NAME
+
+# Set the image root and Rails app users' passwords to 'ubuntu' and 'devops' respectively.
+# If this ever gets released we need a better way. Probably as a cmdline-passed ARG.
+RUN echo "root:${ROOT_PASS}" | /usr/sbin/chpasswd
+RUN echo "${USER_NAME}:${USER_PASS}" | /usr/sbin/chpasswd
+
+# Install sudo so we can run elevated privileges as needed.
+# Additionally, add the App's user to the sudo group
+RUN apt-get update && apt-get install sudo
+RUN usermod -aG sudo $USER_NAME
+
+# PLEASE NOTE: Normally the dabase would NOT be installed in the same image as Rails!
+# Normally the database would be put into its own image (one job only and do that job exceptionally).
+# Simply for ease of use, a single image with all the constituent parts was made.
+# MOVE THIS PART TO ITS OWN IMAGE AND USE DOCKER TO CREATE NETWORKED GROUPS LIKE KUBERNETE'S PODS!
+#
+# Install postgresql for local usage. The final app can be modified to use any db host.
+# Make sure to install the development headers for future use.
+RUN apt-get install -y --no-install-recommends postgresql postgresql-contrib libpq-dev
+
+# Change to root user and then start the database server so we can add the app's db user.
+# Call 'sleep' for 20s to make sure the db engine has started, is alive and available.
+USER root
+RUN /etc/init.d/postgresql start && /bin/sleep 20s && sudo -i -u postgres psql -c "CREATE USER ${USER_NAME} WITH LOGIN CREATEDB CREATEROLE PASSWORD 'dbpass';"
+
+# Install nodejs for javascript. Add yarn for module management.
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg -o /root/yarn-pubkey.gpg && apt-key add /root/yarn-pubkey.gpg
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs yarn
+
+# Install the current versions of Rails, bundler,and the postgreSQL gems
+# globally so they're available by default for all images derived from this one.
+RUN gem install rails bundler pg
+
+# Switch to the Rails App user.
+USER $USER_NAME
+# Finally, execute a shell. Around here, we love Bash!
+CMD ["/bin/bash"]
