@@ -15,7 +15,8 @@ To build the base image, which means the primary image all others will be built 
 
 ```sh
 docker build --force-rm --progress plain \
--t deryldowney/rails-toolset:latest -f Dockerfile.rails .
+-t deryldowney/rails-toolset:latest \
+-f Dockerfile.rails .
 ```
 
 This commandline tells Docker to
