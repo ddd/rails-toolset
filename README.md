@@ -36,8 +36,8 @@ This commandline tells Docker to
 To derive additional images from this you would put
 
 ```
-FROM deryldowney/rails-toolset
+FROM deryldowney/rails-toolset:latest
 ```
-at the top of your own `Dockerfile` and build out from there. Simple as that!
+at the top of your own `Dockerfile` and build out from there. Don't forget the `latest` so you always have the most up to date version. Simple as that!
 
 Have fun!
