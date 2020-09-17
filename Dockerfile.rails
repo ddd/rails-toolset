@@ -49,9 +49,10 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg -o /root/yarn-pubkey.gpg &
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
 RUN apt-get update && apt-get install -y --no-install-recommends nodejs yarn
 
-# Install the current versions of Rails, bundler,and the postgreSQL gems
-# globally so they're available by default for all images derived from this one.
-RUN gem install rails bundler pg
+# Install the current versions of Rails, bundler,and the postgreSQL gems, along with
+# rubocop debase ruby-debug-ide and rspec-rails globally so they're available by default
+# for all images derived from this one. This should create a comprehensive Ruby on Rails image.
+RUN gem install rails bundler pg rubocop debase ruby-debug-ide rspec-rails
 
 # Switch to the Rails App user.
 USER $USER_NAME
