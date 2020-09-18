@@ -4,33 +4,19 @@ FROM ruby:2.7
 # Set the MAINTAINER/AUTHOR label so folks know who to blame and get help from.
 LABEL MAINTAINER="ddd@deryldowney.com"
 
-# Basic application user information for creating the user account the app will run under/as.
-# Making them as ARGs here its easy to change in the file and/or modify from the cmdline as
-# part of the 'docker build' command.
-ARG USER_ID='1000'
-ARG GROUP_ID='1000'
-ARG USER_NAME='rails_user'
-ARG GROUP_NAME=$USER_NAME
-ARG HOME_DIR='/workspaces/rails_devapp'
+# Use an ARG so commandline builds can change this
 ARG ROOT_PASS='ubuntu'
-ARG USER_PASS='devops'
 
-# Create the user & group that will be used to run the Rails Application under.
-# Set the user's HOMEDIR to the app's source directory.
-RUN addgroup --gid $GROUP_ID $GROUP_NAME
-RUN adduser --disabled-password --gecos '' --home $HOME_DIR --uid $USER_ID --gid $GROUP_ID $USER_NAME
+# Make sure we are in the root user context
+USER root
 
-# Set the image root and Rails app users' passwords to 'ubuntu' and 'devops' respectively.
-# If this ever gets released we need a better way. Probably as a cmdline-passed ARG.
+# Set the root password on this image. This method needs to be changed in the future
 RUN echo "root:${ROOT_PASS}" | /usr/sbin/chpasswd
-RUN echo "${USER_NAME}:${USER_PASS}" | /usr/sbin/chpasswd
 
-# Install sudo so we can run elevated privileges as needed.
-# Additionally, add the App's user to the sudo group
-RUN apt-get update && apt-get install sudo
-RUN usermod -aG sudo $USER_NAME
+# Make sure the entire image is using updated packages
+RUN apt-get update && apt-get -y upgrade && apt-get -y autoremove && apt-get -y clean
 
-# PLEASE NOTE: Normally the dabase would NOT be installed in the same image as Rails!
+# PLEASE NOTE: Normally the database would NOT be installed in the same image as Rails!
 # Normally the database would be put into its own image (one job only and do that job exceptionally).
 # Simply for ease of use, a single image with all the constituent parts was made.
 # MOVE THIS PART TO ITS OWN IMAGE AND USE DOCKER TO CREATE NETWORKED GROUPS LIKE KUBERNETE'S PODS!
@@ -39,10 +25,8 @@ RUN usermod -aG sudo $USER_NAME
 # Make sure to install the development headers for future use.
 RUN apt-get install -y --no-install-recommends postgresql postgresql-contrib libpq-dev
 
-# Change to root user and then start the database server so we can add the app's db user.
-# Call 'sleep' for 20s to make sure the db engine has started, is alive and available.
-USER root
-RUN /etc/init.d/postgresql start && /bin/sleep 20s && sudo -i -u postgres psql -c "CREATE USER ${USER_NAME} WITH LOGIN CREATEDB CREATEROLE PASSWORD 'dbpass';"
+# Install OpenSSH client and server, as well as rsync for use with Docker+Rubymine and/or standalone access
+RUN apt-get -y install --no-install-recommends openssh-server openssh-known-hosts openssh-client keychain rsync
 
 # Install nodejs for javascript. Add yarn for module management.
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg -o /root/yarn-pubkey.gpg && apt-key add /root/yarn-pubkey.gpg
