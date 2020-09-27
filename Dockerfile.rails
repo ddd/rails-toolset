@@ -38,7 +38,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends nodejs yarn
 # for all images derived from this one. This should create a comprehensive Ruby on Rails image.
 RUN gem install rails bundler pg rubocop debase ruby-debug-ide rspec-rails
 
-# Switch to the Rails App user.
-USER $USER_NAME
 # Finally, execute a shell. Around here, we love Bash!
 CMD ["/bin/bash"]
